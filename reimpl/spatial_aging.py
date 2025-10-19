@@ -7,6 +7,10 @@ Spot diameter: ~220 nanometers
 Center-to-center distance: 500 nanometers between spots
 This means there's about 280nm spacing between adjacent spots (500nm - 220nm = 280nm gap)
 
+For 2-month-old young adult mice:
+Cell Length: ~100-150 micrometers (μm)
+Cell Width: ~15-20 micrometers (μm)
+
 """
 
 #%% Spatial Transcriptomics Analysis Pipeline
@@ -69,8 +73,32 @@ def load_gem_file(file_path: str) -> AnnData:
 import squidpy as sq
 
 # adata = load_gem_file(r"D:\work\bio\spatial\hallmark of aging\STT0000039\Analysis\STSA0000367\STTS0000720\Y-2M-Heart-1_1_filtered_bin50.gem.gz")
-adata = load_gem_file(r"D:\work\bio\spatial\hallmark of aging\STT0000039\Analysis\STSA0000368\STTS0000721\Y-2M-Heart-2_1_filtered_bin50.gem.gz")
+# adata = load_gem_file(r"D:\work\bio\spatial\hallmark of aging\STT0000039\Analysis\STSA0000368\STTS0000721\Y-2M-Heart-2_1_filtered_bin50.gem.gz")
+adata = load_gem_file(r"D:\work\bio\spatial\hallmark of aging\STT0000039\Analysis\STSA0000400\STTS0000753\Y-2M-Liver-2_2_filtered_bin50.gem.gz")
 
+
+#%%
 adata.obs["total_counts"] = adata.X.sum(axis=1)
+adata.obs['n_genes'] = (adata.X > 0).sum(1)
 
 sq.pl.spatial_scatter(adata, shape=None, size=1, color="total_counts")
+
+
+#%% aggregation test
+
+
+n = 5  # number of rows to aggregate
+rows, cols = adata.X.shape
+
+# Make sure number of rows is divisible by n
+trimmed_rows = (rows // n) * n
+X_trimmed = adata.X[:trimmed_rows]  # drop extra rows if not divisible by n
+
+# Reshape and sum
+adata.X_agg = X_trimmed.reshape(-1, n, cols).sum(axis=1)
+
+new_genes = (adata.X_agg > 0 ).sum(1)
+
+plt.hist(adata.obs['n_genes'], bins=100)
+
+
